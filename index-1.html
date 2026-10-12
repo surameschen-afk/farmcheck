@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>🏖️ ส่งงานฟาร์ม – Beach Farm Board</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600&family=Kanit:wght@500;600&display=swap" rel="stylesheet">
+<style>
+:root{--sky1:#7fd8ff;--sky2:#d9f6ff;--sand:#ffe8b8;--card:rgba(255,255,255,.82);--ink:#0b3954;--accent:#ff7e5f;--accent2:#00b4d8;--shadow:0 8px 24px rgba(0,80,120,.18);box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--sky1:#0b3a5b;--sky2:#14526f;--sand:#3b3320;--card:rgba(16,40,58,.82);--ink:#e6f6ff;--shadow:0 8px 24px rgba(0,0,0,.4)}}
+:root[data-theme="dark"]{--sky1:#0b3a5b;--sky2:#14526f;--sand:#3b3320;--card:rgba(16,40,58,.82);--ink:#e6f6ff}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;min-height:100vh;font-family:"Prompt","Noto Sans Thai",system-ui,sans-serif;color:var(--ink);background:linear-gradient(180deg,var(--sky1) 0%,var(--sky2) 55%,var(--sand) 100%) fixed}
+#snow{position:fixed;inset:0;pointer-events:none;z-index:50}
+.wrap{max-width:640px;margin:0 auto;padding:18px 14px 90px;position:relative;z-index:2}
+header{text-align:center;padding:14px 0 6px}
+header h1{margin:0;font-family:"Kanit","Prompt",sans-serif;font-weight:600;font-size:1.9rem;text-shadow:0 2px 0 rgba(255,255,255,.5)}
+header p{margin:6px 0 0;opacity:.8}
+.waves{height:34px;margin:6px -14px 14px;background:
+ radial-gradient(circle at 12px 0,transparent 14px,rgba(0,180,216,.55) 15px) 0 0/28px 34px repeat-x;filter:drop-shadow(0 3px 3px rgba(0,100,150,.25))}
+.card{background:var(--card);backdrop-filter:blur(8px);border-radius:22px;padding:16px;box-shadow:var(--shadow);margin-bottom:16px;border:1px solid rgba(255,255,255,.5)}
+input[type=text],textarea{width:100%;border:2px solid rgba(0,180,216,.35);border-radius:14px;padding:11px 13px;font:inherit;color:inherit;background:rgba(255,255,255,.55);margin-bottom:10px;outline:none}
+textarea{resize:vertical;min-height:84px}
+input:focus,textarea:focus{border-color:var(--accent2)}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+button,.filebtn{border:0;border-radius:999px;padding:12px 20px;font:inherit;font-weight:600;cursor:pointer;color:#fff;background:linear-gradient(135deg,var(--accent2),#0077b6);box-shadow:0 4px 12px rgba(0,119,182,.35);transition:transform .15s}
+button:active,.filebtn:active{transform:scale(.95)}
+#send{background:linear-gradient(135deg,#ffb347,var(--accent));flex:1}
+#send:disabled{opacity:.5}
+.filebtn{display:inline-block}
+#file{display:none}
+#preview{display:none;position:relative;margin-bottom:10px}
+#preview img{width:100%;max-height:260px;object-fit:cover;border-radius:16px}
+#preview b{position:absolute;top:8px;right:8px;background:rgba(0,0,0,.6);color:#fff;width:28px;height:28px;border-radius:50%;text-align:center;line-height:28px;cursor:pointer}
+.post{animation:pop .4s ease}
+@keyframes pop{from{opacity:0;transform:translateY(14px) scale(.97)}}
+.who{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.av{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;font-size:1.2rem;background:linear-gradient(135deg,#ffd166,#ff7e5f)}
+.who small{opacity:.65;display:block}
+.post p{margin:0 0 10px;white-space:pre-wrap;word-break:break-word}
+.post img{width:100%;border-radius:16px;display:block;cursor:zoom-in}
+.empty,.note{text-align:center;opacity:.7;padding:20px}
+.note{font-size:.85rem;padding:6px}
+#zoom{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:99;align-items:center;justify-content:center}
+#zoom img{max-width:94%;max-height:90%;border-radius:14px}
+</style>
+</head>
+<body>
+<canvas id="snow"></canvas>
+<div class="wrap">
+  <header>
+    <h1>🏖️ ส่งงานฟาร์ม 🌊</h1>
+    <p>โพสต์ข้อความและรูปงานฟาร์มของคุณ ทุกคนเห็นพร้อมกัน ❄️</p>
+  </header>
+  <div class="waves"></div>
+
+  <div class="card">
+    <input type="text" id="name" maxlength="30" placeholder="🐚 ชื่อของคุณ">
+    <textarea id="msg" maxlength="500" placeholder="🌴 พิมพ์ข้อความ เช่น ส่งงานฟาร์มรอบนี้..."></textarea>
+    <div id="preview"><img id="pimg" alt=""><b id="rm">✕</b></div>
+    <div class="row">
+      <label class="filebtn" for="file">📷 ส่งรูป</label>
+      <input type="file" id="file" accept="image/*">
+      <button id="send">🏝️ ส่งข้อความ</button>
+    </div>
+    <div class="note" id="status"></div>
+  </div>
+
+  <div id="feed"><div class="empty">กำลังโหลดโพสต์... 🌊</div></div>
+</div>
+<div id="zoom"><img id="zimg" alt=""></div>
+
+<script>
+/* ---------- หิมะตก ---------- */
+(function(){
+  const c=document.getElementById('snow'),x=c.getContext('2d');let W,H,flakes=[];
+  function size(){W=c.width=innerWidth;H=c.height=innerHeight}
+  size();addEventListener('resize',size);
+  for(let i=0;i<90;i++)flakes.push({x:Math.random()*W,y:Math.random()*H,r:Math.random()*3+1,s:Math.random()*1+.5,d:Math.random()*Math.PI*2});
+  (function loop(){
+    x.clearRect(0,0,W,H);x.fillStyle='rgba(255,255,255,.9)';
+    for(const f of flakes){
+      f.y+=f.s;f.d+=.01;f.x+=Math.sin(f.d)*.6;
+      if(f.y>H){f.y=-5;f.x=Math.random()*W}
+      x.beginPath();x.arc(f.x,f.y,f.r,0,7);x.fill();
+    }
+    requestAnimationFrame(loop);
+  })();
+})();
+
+/* ---------- ส่วนประกอบ ---------- */
+const $=id=>document.getElementById(id);
+let imgData=null,db=null;
+const emojis=['🐚','🦀','🐠','🌴','🐢','🦭','🐬','⛱️','🍍','🥥'];
+
+try{$('name').value=localStorage.getItem('bf_name')||''}catch(e){}
+
+function compress(file){
+  return new Promise((res,rej)=>{
+    const img=new Image(),u=URL.createObjectURL(file);
+    img.onload=()=>{
+      const m=900,k=Math.min(1,m/Math.max(img.width,img.height));
+      const cv=document.createElement('canvas');cv.width=img.width*k;cv.height=img.height*k;
+      cv.getContext('2d').drawImage(img,0,0,cv.width,cv.height);
+      let q=.8,d=cv.toDataURL('image/jpeg',q);
+      while(d.length>170000&&q>.3){q-=.1;d=cv.toDataURL('image/jpeg',q)}
+      URL.revokeObjectURL(u);res(d);
+    };
+    img.onerror=rej;img.src=u;
+  });
+}
+$('file').onchange=async e=>{
+  const f=e.target.files[0];if(!f)return;
+  try{imgData=await compress(f);$('pimg').src=imgData;$('preview').style.display='block'}
+  catch(err){$('status').textContent='อ่านรูปไม่ได้ ลองรูปอื่นนะ'}
+  e.target.value='';
+};
+$('rm').onclick=()=>{imgData=null;$('preview').style.display='none'};
+
+function timeAgo(t){
+  const s=(Date.now()-t)/1000;
+  if(s<60)return 'เมื่อสักครู่';
+  if(s<3600)return Math.floor(s/60)+' นาทีที่แล้ว';
+  if(s<86400)return Math.floor(s/3600)+' ชั่วโมงที่แล้ว';
+  return new Date(t).toLocaleDateString('th-TH');
+}
+function render(docs){
+  const feed=$('feed');feed.textContent='';
+  if(!docs.length){feed.innerHTML='<div class="empty">ยังไม่มีโพสต์ มาเป็นคนแรกเลย! 🏝️</div>';return}
+  for(const d of docs){
+    const p=d.data(),el=document.createElement('div');el.className='card post';
+    const who=document.createElement('div');who.className='who';
+    const av=document.createElement('div');av.className='av';
+    av.textContent=emojis[(p.name||'?').length%emojis.length];
+    const nm=document.createElement('div');
+    const b=document.createElement('b');b.textContent=p.name||'ไม่ระบุชื่อ';
+    const sm=document.createElement('small');sm.textContent=timeAgo(p.ts||Date.now());
+    nm.append(b,sm);who.append(av,nm);el.append(who);
+    if(p.text){const t=document.createElement('p');t.textContent=p.text;el.append(t)}
+    if(typeof p.img==='string'&&p.img.startsWith('data:image/')){
+      const i=document.createElement('img');i.src=p.img;i.alt='รูปงานฟาร์ม';
+      i.onclick=()=>{$('zimg').src=p.img;$('zoom').style.display='flex'};el.append(i);
+    }
+    feed.append(el);
+  }
+}
+$('zoom').onclick=()=>$('zoom').style.display='none';
+
+$('send').onclick=async()=>{
+  const name=$('name').value.trim(),text=$('msg').value.trim();
+  if(!name){$('status').textContent='ใส่ชื่อก่อนนะ 🐚';return}
+  if(!text&&!imgData){$('status').textContent='พิมพ์ข้อความหรือเลือกรูปก่อนนะ';return}
+  if(!window.fbAdd){$('status').textContent='ยังเชื่อมต่อ Firebase ไม่ได้ ตรวจสอบ firebaseConfig';return}
+  $('send').disabled=true;$('status').textContent='กำลังส่ง... 🌊';
+  try{
+    await window.fbAdd({name,text,img:imgData||'',ts:Date.now()});
+    try{localStorage.setItem('bf_name',name)}catch(e){}
+    $('msg').value='';imgData=null;$('preview').style.display='none';$('status').textContent='ส่งแล้ว! ✨';
+  }catch(e){$('status').textContent='ส่งไม่สำเร็จ: '+(e.message||'ลองใหม่')}
+  $('send').disabled=false;
+};
+
+</script>
+<script type="module">
+/* ---------- เชื่อมต่อ Firebase (ใส่ค่าของคุณตรงนี้) ---------- */
+import {initializeApp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {getFirestore,collection,addDoc,query,orderBy,limit,onSnapshot} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDMdMvRPujGtpiM9CzRBOeIrZ1ICJEqe0U",
+  authDomain: "farmtime.firebaseapp.com",
+  projectId: "farmtime",
+  storageBucket: "farmtime.firebasestorage.app",
+  messagingSenderId: "697090026621",
+  appId: "1:697090026621:web:c1189cf65b8546fd461514"
+};
+
+try{
+  const app=initializeApp(firebaseConfig),fs=getFirestore(app),col=collection(fs,"posts");
+  window.fbAdd=data=>addDoc(col,data);
+  onSnapshot(query(col,orderBy("ts","desc"),limit(50)),
+    snap=>render(snap.docs),
+    ()=>{document.getElementById('feed').innerHTML='<div class="empty">โหลดไม่สำเร็จ ตรวจสอบ firebaseConfig และ Rules 🌴</div>'});
+}catch(e){
+  document.getElementById('feed').innerHTML='<div class="empty">ยังไม่ได้ใส่ firebaseConfig 🏖️</div>';
+}
+</script>
+</body>
+</html>
