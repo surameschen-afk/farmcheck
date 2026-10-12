@@ -42,6 +42,7 @@ button:active,.filebtn:active{transform:scale(.95)}
 .who small{opacity:.65;display:block}
 .post p{margin:0 0 10px;white-space:pre-wrap;word-break:break-word}
 .post img{width:100%;border-radius:16px;display:block;cursor:zoom-in}
+.del{margin-left:auto;background:rgba(255,80,80,.9);padding:6px 12px;font-size:.85rem;box-shadow:none}
 .empty,.note{text-align:center;opacity:.7;padding:20px}
 .note{font-size:.85rem;padding:6px}
 #zoom{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:99;align-items:center;justify-content:center}
@@ -94,6 +95,8 @@ button:active,.filebtn:active{transform:scale(.95)}
 /* ---------- ส่วนประกอบ ---------- */
 const $=id=>document.getElementById(id);
 let imgData=null,db=null;
+let myId='';
+try{myId=localStorage.getItem('bf_id');if(!myId){myId=Math.random().toString(36).slice(2)+Date.now().toString(36);localStorage.setItem('bf_id',myId)}}catch(e){myId='x'+Math.random()}
 const emojis=['🐚','🦀','🐠','🌴','🐢','🦭','🐬','⛱️','🍍','🥥'];
 
 try{$('name').value=localStorage.getItem('bf_name')||''}catch(e){}
@@ -138,7 +141,16 @@ function render(docs){
     const nm=document.createElement('div');
     const b=document.createElement('b');b.textContent=p.name||'ไม่ระบุชื่อ';
     const sm=document.createElement('small');sm.textContent=timeAgo(p.ts||Date.now());
-    nm.append(b,sm);who.append(av,nm);el.append(who);
+    nm.append(b,sm);who.append(av,nm);
+    if(p.owner&&p.owner===myId){
+      const del=document.createElement('button');del.className='del';del.textContent='🗑️ ลบ';
+      del.onclick=async()=>{
+        if(!confirm('ลบโพสต์นี้ใช่ไหม?'))return;
+        try{await window.fbDel(d.id)}catch(e){alert('ลบไม่สำเร็จ: '+(e.message||''))}
+      };
+      who.append(del);
+    }
+    el.append(who);
     if(p.text){const t=document.createElement('p');t.textContent=p.text;el.append(t)}
     if(typeof p.img==='string'&&p.img.startsWith('data:image/')){
       const i=document.createElement('img');i.src=p.img;i.alt='รูปงานฟาร์ม';
@@ -156,7 +168,7 @@ $('send').onclick=async()=>{
   if(!window.fbAdd){$('status').textContent='ยังเชื่อมต่อ Firebase ไม่ได้ ตรวจสอบ firebaseConfig';return}
   $('send').disabled=true;$('status').textContent='กำลังส่ง... 🌊';
   try{
-    await window.fbAdd({name,text,img:imgData||'',ts:Date.now()});
+    await window.fbAdd({name,text,img:imgData||'',ts:Date.now(),owner:myId});
     try{localStorage.setItem('bf_name',name)}catch(e){}
     $('msg').value='';imgData=null;$('preview').style.display='none';$('status').textContent='ส่งแล้ว! ✨';
   }catch(e){$('status').textContent='ส่งไม่สำเร็จ: '+(e.message||'ลองใหม่')}
@@ -167,7 +179,7 @@ $('send').onclick=async()=>{
 <script type="module">
 /* ---------- เชื่อมต่อ Firebase (ใส่ค่าของคุณตรงนี้) ---------- */
 import {initializeApp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import {getFirestore,collection,addDoc,query,orderBy,limit,onSnapshot} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import {getFirestore,collection,addDoc,deleteDoc,doc,query,orderBy,limit,onSnapshot} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDMdMvRPujGtpiM9CzRBOeIrZ1ICJEqe0U",
@@ -181,6 +193,7 @@ const firebaseConfig = {
 try{
   const app=initializeApp(firebaseConfig),fs=getFirestore(app),col=collection(fs,"posts");
   window.fbAdd=data=>addDoc(col,data);
+  window.fbDel=id=>deleteDoc(doc(fs,'posts',id));
   onSnapshot(query(col,orderBy("ts","desc"),limit(50)),
     snap=>render(snap.docs),
     ()=>{document.getElementById('feed').innerHTML='<div class="empty">โหลดไม่สำเร็จ ตรวจสอบ firebaseConfig และ Rules 🌴</div>'});
